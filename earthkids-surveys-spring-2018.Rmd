@@ -1,0 +1,318 @@
+---
+title: "EarthKids survey report - April 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, fig.width = 8)
+
+library(tidyverse)
+library(googlesheets)
+library(janitor)
+library(scales)
+library(htmlwidgets)
+library(knitr)
+library(kableExtra)
+library(bookdown)
+
+
+source("https://raw.githubusercontent.com/dgkeyes/dk-functions-and-themes/master/themes/mna_themes.R")
+source("https://raw.githubusercontent.com/dgkeyes/dk-functions-and-themes/master/functions/dk_functions.R")
+
+
+```
+
+```{r get_data, include=FALSE}
+
+# GET DATA ----------------------------------------------------------------
+
+earthkids.surveys.artists.sheet <- gs_title("eARThKids Teaching Artist Survey (Responses)")
+
+earthkids.surveys.artists.data <- gs_read(earthkids.surveys.artists.sheet)
+
+
+earthkids.surveys.teachers.sheet <- gs_title("eARThKids Teacher Survey (Responses)")
+
+earthkids.surveys.teachers.data <- gs_read(earthkids.surveys.teachers.sheet) 
+
+
+# CREATE SUBSETS OF DATA --------------------------------------------------
+
+satisfaction.questions <- c("I feel confident that I understand what arts integration is",
+                            "I feel confident delivering arts-integrated instruction",
+                            "Arts integration is a useful strategy for teaching students with diverse learning styles",
+                            "Arts integration can help teachers be more effective as educators",
+                            "I am confident that I can now integrate arts into my daily lesson(s) than I did before",
+                            "Through participation in the eARThKids program, I have learned the value of collaborating with a teaching artist/teacher",
+                            "Through participation in the eARThKids program, I have improved my ability to co-teach an arts-integrated lesson",
+                            "After the program, I feel that the my students are showing growth (or change) in their reading (habits and understanding)",
+                            "After the program, I feel that the students have a better understanding of the environment around them",
+                            "The eARThKids program was engaging for the students",
+                            "Aspects of the eARThKids program have had an impact on students’ critical thinking skills",
+                            "Students have demonstrated higher levels of involvement in the learning process",
+                            "Students demonstrated their own initiative and creativity through their participation in the various activities",
+                            "The Growing UP Green/eARThKids curriculum is aligned well with grade 1 ELA, fine arts and science standards and indicators",
+                            "Using lessons from the Growing Up Green/eARThKids curriculum to teach R/ELA is an effective way to improve reading abilities of my students",
+                            "Lesson plan activity was useful to me",
+                            "I co-planned the lessons with the teaching artist/teacher")
+
+earthkids.surveys.artists.satisfaction <- earthkids.surveys.artists.data %>%
+     select(contains("Based on your experience")) %>%
+     set_names(satisfaction.questions) %>%
+     gather() %>%
+     set_names(c("question", "response")) %>%
+     mutate(respondent = "Teachers")
+
+earthkids.surveys.teachers.satisfaction <- earthkids.surveys.teachers.data %>%
+     select(contains("Based on your experience")) %>%
+     set_names(satisfaction.questions) %>%
+     gather() %>%
+     set_names(c("question", "response")) %>%
+     mutate(respondent = "Artists")
+
+
+earthkids.satisfaction <- bind_rows(earthkids.surveys.artists.satisfaction, earthkids.surveys.teachers.satisfaction) %>%
+     group_by(respondent, question) %>%
+     count(response) %>%
+     filter(response != "Neither Agree nor Disagree") %>%
+     mutate(pct = dk_proportions(n)) %>%
+     mutate(n_inv = ifelse(response == "Disagree", n * -1, n)) %>%
+     mutate(pct_inv = ifelse(response == "Disagree", pct * -1, pct)) %>%
+     ungroup() %>%
+     # mutate(question = str_wrap(question, width = 40)) %>%
+     mutate(response = fct_relevel(response, c("Strongly Agree",
+                                               "Agree",
+                                               "Disagree")))
+
+
+
+
+```
+
+# Introduction
+
+
+
+# Overall Satisfaction
+
+Question asked: Based on your experience as a classroom teacher/teaching artist in the eARThKids program, please rate the degree to which you agree to the following statements that speak to your knowledge and satisfaction with the program:
+
+<div align="center">
+<span style="color: #F05356; font-weight: 700;">Disagree</span>&nbsp;&nbsp;
+<span style="color: #BFD958; font-weight: 700;">Agree</span>&nbsp;&nbsp;
+<span style="color: #2BAADF; font-weight: 700;">Strongly agree</span>
+</div>
+
+```{r satisfaction, echo = FALSE, fig.height = 15}
+
+ggplot(earthkids.satisfaction, aes(x = respondent, y = n_inv,
+                                   fill = factor(response))) +    
+     geom_bar(stat = "identity", position = "stack") +
+     geom_text(aes(label = n),
+               position = position_stack(vjust = .5),
+               color = "white") +
+     coord_flip() +
+     facet_wrap(~question, ncol = 2, labeller=label_wrap_gen(width=35)) +
+     scale_fill_manual(values = c(mna.blue, mna.green, mna.red)) +
+     mna.bar.chart.theme + 
+     theme(axis.text.x = element_blank(),
+           panel.grid.major.x = element_blank())
+
+```
+
+# Learning
+
+Question asked to teaching artists: I feel that the teacher(s) I worked with can... 
+<br>
+Question asked to teachers: I can... 
+
+<div align="center">
+<span style="color: #F05356; font-weight: 700;">Disagree</span>&nbsp;&nbsp;
+<span style="color: #BFD958; font-weight: 700;">Agree</span>&nbsp;&nbsp;
+<span style="color: #2BAADF; font-weight: 700;">Strongly agree</span>
+</div>
+
+```{r teacher_qualities, echo = FALSE, fig.height = 8}
+
+
+qualities.questions <- c("Design an arts-integrated lesson",
+                         "Identify learner outcomes in an arts-integrated lesson",
+                         "Connect the Common Core Standards with Arts Standards",
+                         "Collaborate and plan without a teaching artist",
+                         "Help students develop 21st century skills through the integration of the arts in my lessons",
+                         "Use the arts to connect with students’ prior knowledge",
+                         "Assess an arts-integrated lesson")
+
+earthkids.teacher.qualities.teachers <- earthkids.surveys.teachers.data %>%
+     select(contains("I can...")) %>%
+     set_names(qualities.questions) %>%
+     gather() %>%
+     set_names(c("question", "response")) %>%
+     mutate(respondent = "Artists")
+
+earthkids.artists.qualities.teachers <- earthkids.surveys.artists.data %>%
+     select(contains("I feel that the teacher")) %>%
+     set_names(qualities.questions) %>%
+     gather() %>%
+     set_names(c("question", "response")) %>%
+     mutate(respondent = "Teachers")
+
+
+teacher.qualities <- bind_rows(earthkids.artists.qualities.teachers, earthkids.teacher.qualities.teachers) %>%
+     group_by(respondent, question) %>%
+     count(response) %>%
+     filter(response != "Neither Agree nor Disagree") %>%
+     mutate(pct = dk_proportions(n)) %>%
+     mutate(n_inv = ifelse(response == "Disagree", n * -1, n)) %>%
+     mutate(pct_inv = ifelse(response == "Disagree", pct * -1, pct)) %>%
+     ungroup() %>%
+     mutate(response = str_wrap(response, width = 40)) %>%
+     mutate(response = fct_relevel(response, c("Strongly Agree",
+                                               "Agree")))
+
+ggplot(teacher.qualities, aes(x = respondent, y = n_inv,
+                              fill = factor(response))) +    
+     geom_bar(stat = "identity", position = "stack") +
+     geom_text(aes(label = n),
+               position = position_stack(vjust = .5),
+               color = "white") +
+     coord_flip() +
+     facet_wrap(~question, ncol = 2, labeller=label_wrap_gen(width=35)) +
+     scale_fill_manual(values = c(mna.blue, mna.green, mna.red)) +
+     mna.bar.chart.theme + 
+     theme(axis.text.x = element_blank(),
+           panel.grid.major.x = element_blank())
+```
+
+# Professional Development
+
+<div align="center">
+<span style="color: #F05356; font-weight: 700;">Disagree</span>&nbsp;&nbsp;
+<span style="color: #BFD958; font-weight: 700;">Agree</span>&nbsp;&nbsp;
+<span style="color: #2BAADF; font-weight: 700;">Strongly agree</span>
+</div>
+
+```{r pd, echo = FALSE, fig.height = 8}
+
+dk_delete_mna_extras <- function(item) {
+     item <- str_replace(item, "\\[", "")
+     item <- str_replace(item, "\\]", "")
+     item <- str_replace(item, "\\.", "")
+}
+
+pd.teachers <- earthkids.surveys.teachers.data %>%
+     select(contains("Quality of Professional")) %>%
+     gather() %>%
+     set_names(c("question", "response")) %>%
+     mutate(question = str_replace(question,
+                                   "Quality of Professional Development, Feedback, and Support ",
+                                   "")) %>%
+     mutate(question = dk_delete_mna_extras(question)) %>%
+     mutate(question = str_replace(question,
+                                   "Opportunities to collaborate with the teaching artist was sufficient",
+                                   "Opportunities to collaborate with teaching artists were sufficient")) %>%
+     mutate(question = str_replace(question,
+                                   "Quality of feedback on lessons or any other aspect from the teaching artist was high",
+                                   "Quality of feedback on lessons or any other aspect from the teaching artist/teacher was high")) %>%
+     mutate(respondent = "Teachers")
+
+pd.artists <- earthkids.surveys.artists.data %>%
+     select(contains("Quality of Professional")) %>%
+     gather() %>%
+     set_names(c("question", "response")) %>%
+     mutate(question = str_replace(question,
+                                   "Quality of Professional Development, Feedback, and Support ",
+                                   "")) %>%
+     mutate(question = dk_delete_mna_extras(question)) %>%
+     mutate(question = str_replace(question,
+                                   "Opportunities to collaborate with another teaching artist was sufficient",
+                                   "Opportunities to collaborate with teaching artists were sufficient")) %>%
+     mutate(question = str_replace(question,
+                                   "Quality of feedback on lessons or any other aspect from the teacher was high",
+                                   "Quality of feedback on lessons or any other aspect from the teaching artist/teacher was high")) %>%
+     mutate(respondent = "Artists")
+
+pd <- bind_rows(pd.artists, pd.teachers) %>%
+     group_by(respondent, question) %>%
+     count(response) %>%
+     filter(response != "Neither Agree nor Disagree") %>%
+     mutate(pct = dk_proportions(n)) %>%
+     mutate(n_inv = ifelse(response == "Disagree", n * -1, n)) %>%
+     mutate(pct_inv = ifelse(response == "Disagree", pct * -1, pct)) %>%
+     ungroup() %>%
+     mutate(response = str_wrap(response, width = 40)) %>%
+     mutate(response = fct_relevel(response, c("Strongly Agree",
+                                               "Agree")))
+
+ggplot(pd, aes(x = respondent, y = n_inv,
+               fill = factor(response))) +    
+     geom_bar(stat = "identity", position = "stack") +
+     geom_text(aes(label = n),
+               position = position_stack(vjust = .5),
+               color = "white") +
+     coord_flip() +
+     facet_wrap(~question, ncol = 2, labeller=label_wrap_gen(width=35)) +
+     scale_fill_manual(values = c(mna.blue, mna.green, mna.red)) +
+     scale_y_continuous(labels = percent) +
+     mna.bar.chart.theme + 
+     theme(axis.text.x = element_blank(),
+           panel.grid.major.x = element_blank())
+```
+
+
+
+
+# Open-Ended Responses (Teaching Artists)
+
+```{r dk_summarize_open_ended, echo = FALSE}
+
+dk_summarize_open_ended <- function(df) {
+df %>%
+     set_names("response") %>%
+     filter(!is.na(response)) %>%
+     mutate(response = str_trim(response)) %>%
+     filter(!str_detect(response, fixed("n/a", ignore_case = TRUE))) %>%
+     filter(!str_detect(response, fixed("No", ignore_case = TRUE))) %>%
+     filter(!str_detect(response, fixed("None", ignore_case = TRUE))) %>%
+     filter(!str_detect(response, fixed("Not sure", ignore_case = TRUE))) %>%
+     kable("html", col.names = colnames(df)) %>%
+     kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+}
+```
+
+```{r artists_responses, echo = FALSE, include = TRUE}
+
+dk_summarize_open_ended(earthkids.surveys.artists.data[39])
+dk_summarize_open_ended(earthkids.surveys.artists.data[40])
+dk_summarize_open_ended(earthkids.surveys.artists.data[41])
+dk_summarize_open_ended(earthkids.surveys.artists.data[42])
+dk_summarize_open_ended(earthkids.surveys.artists.data[43])
+dk_summarize_open_ended(earthkids.surveys.artists.data[44])
+dk_summarize_open_ended(earthkids.surveys.artists.data[45])
+
+```
+
+# Open-Ended Responses (Teachers)
+
+```{r teachers_responses, echo = FALSE, include = TRUE}
+
+dk_summarize_open_ended(earthkids.surveys.teachers.data[40])
+dk_summarize_open_ended(earthkids.surveys.teachers.data[41])
+dk_summarize_open_ended(earthkids.surveys.teachers.data[42])
+dk_summarize_open_ended(earthkids.surveys.teachers.data[43])
+dk_summarize_open_ended(earthkids.surveys.teachers.data[44])
+dk_summarize_open_ended(earthkids.surveys.teachers.data[45])
+dk_summarize_open_ended(earthkids.surveys.teachers.data[46])
+
+```
+
+
+
+
+```{r bookdown, eval = FALSE, echo = FALSE, include = FALSE}
+
+gitbook(split_by = "chapter")
+render_book("earthkids-surveys-spring-2018.Rmd", "bookdown::gitbook", output_dir = "bookdown")
+
+```
