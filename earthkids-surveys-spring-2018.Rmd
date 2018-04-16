@@ -304,7 +304,6 @@ dk_summarize_open_ended(earthkids.surveys.artists.data[39])
 dk_summarize_open_ended(earthkids.surveys.artists.data[40])
 dk_summarize_open_ended(earthkids.surveys.artists.data[41])
 dk_summarize_open_ended(earthkids.surveys.artists.data[42])
-dk_summarize_open_ended(earthkids.surveys.artists.data[43])
 dk_summarize_open_ended(earthkids.surveys.artists.data[44])
 dk_summarize_open_ended(earthkids.surveys.artists.data[45])
 
