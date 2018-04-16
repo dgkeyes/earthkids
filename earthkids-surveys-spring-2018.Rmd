@@ -1,5 +1,5 @@
 ---
-title: "EarthKids survey report - April 2018"
+title: "eARThKids survey report - April 2018"
 output: html_document
 ---
 
@@ -93,6 +93,23 @@ earthkids.satisfaction <- bind_rows(earthkids.surveys.artists.satisfaction, eart
 # Introduction
 
 
+
+
+The external evaluation of eARThKids by MN Associates, Inc. examines to what extent the various strategies and activities of the project have led to the intended programmatic outcomes. The main sources of data collection are: document reviews, meeting notes, teacher and teaching artists surveys, students' demographics and attendance data, and pre-and-post student assessments using data from the Directed Reading Assessments.
+
+The eARThKids evaluation is based on the following evaluation questions:
+
+<b>Program Implementation</b>
+
+1. To what extent are the participating schools implementing the eARThKids model as designed and envisioned by the Young Audiences and PG County Public Schools?
+
+2. To what extent do participating teachers find eARThKids to be effective in (a) successfully improving their instructional practices through co-teaching and professional development?
+
+<b>Program Impact</b>
+
+1. To what extent has the eARThKids out-of-school-time program assisted students in meeting academic requirements on grade level?
+
+This short survey summary report was generated from data collected from the classroom teachers and teaching artists for the eARThKids program has been completed by MN Associates, Inc.  
 
 # Overall Satisfaction
 
